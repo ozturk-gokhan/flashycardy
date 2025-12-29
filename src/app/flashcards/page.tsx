@@ -6,6 +6,8 @@ import { eq, count } from "drizzle-orm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { CreateDeckModal } from "@/components/create-deck-modal";
+import { EditDeckButton } from "@/components/edit-deck-button";
 
 export default async function Flashcards() {
   const { userId } = await auth();
@@ -49,9 +51,11 @@ export default async function Flashcards() {
                   }
                 </p>
               </div>
-              <Button className="bg-green-600 hover:bg-green-700">
-                Create New Deck
-              </Button>
+              <CreateDeckModal>
+                <Button className="bg-green-600 hover:bg-green-700">
+                  Create New Deck
+                </Button>
+              </CreateDeckModal>
             </div>
 
             {userDecks.length === 0 ? (
@@ -61,9 +65,11 @@ export default async function Flashcards() {
                   <p className="text-slate-300 mb-6">
                     Create your first flashcard deck to get started with your studies.
                   </p>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
-                    Create Your First Deck
-                  </Button>
+                  <CreateDeckModal>
+                    <Button className="bg-blue-600 hover:bg-blue-700">
+                      Create Your First Deck
+                    </Button>
+                  </CreateDeckModal>
                 </div>
               </div>
             ) : (
@@ -93,9 +99,7 @@ export default async function Flashcards() {
                           Created: {new Date(deck.createdAt).toLocaleDateString()}
                         </div>
                         <div className="flex gap-2">
-                          <Button size="sm" variant="outline" className="text-slate-300 border-slate-600 hover:bg-slate-700">
-                            Edit
-                          </Button>
+                          <EditDeckButton deck={deck} />
                           <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
                             Study
                           </Button>

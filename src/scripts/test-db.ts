@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { db } from '../lib/db';
-import { usersTable, decksTable, cardsTable } from '../db/schema';
+import { decksTable, cardsTable } from '../db/schema';
 
 async function testDatabaseConnection() {
   try {
@@ -13,7 +13,7 @@ async function testDatabaseConnection() {
 
     // Test schema by counting tables (this will work after schema is pushed)
     try {
-      const userCount = await db.select().from(usersTable).limit(1);
+      const deckCount = await db.select().from(decksTable).limit(1);
       console.log('✅ Schema tables are accessible');
     } catch (error) {
       console.log('⚠️  Schema tables not yet created. Run `npx drizzle-kit push` to create them.');
