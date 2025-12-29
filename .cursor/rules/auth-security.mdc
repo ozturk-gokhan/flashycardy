@@ -1,0 +1,289 @@
+---
+alwaysApply: true
+---
+# Authentication & Data Access Control with Clerk
+
+All authentication in this project is handled by **Clerk**. Critical security requirement: **Users can ONLY access their own data** and must never be able to access data belonging to other users.
+
+## Authentication Setup
+
+### Required Clerk Imports
+```typescript
+import { auth } from '@clerk/nextjs/server';
+import { currentUser } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+```
+
+### Getting Current User ID
+```typescript
+// In Server Components or API routes
+const { userId } = await auth();
+if (!userId) {
+  redirect('/sign-in');
+}
+
+// For user profile information
+const user = await currentUser();
+```
+
+## Data Access Control Patterns
+
+### MANDATORY: User ID Filtering
+**EVERY database query that retrieves user-specific data MUST include user ID filtering:**
+
+```typescript
+// ✅ CORRECT - Always filter by userId
+const userDecks = await db.select()
+  .from(decksTable)
+  .where(eq(decksTable.userId, userId));
+
+const userCards = await db.query.cardsTable.findMany({
+  where: eq(cardsTable.userId, userId),
+});
+
+// ❌ FORBIDDEN - Never query without user filtering
+const allDecks = await db.select().from(decksTable);
+```
+
+### API Route Security Pattern
+All API routes must authenticate and authorize users:
+
+```typescript
+import { auth } from '@clerk/nextjs/server';
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function GET(request: NextRequest) {
+  const { userId } = await auth();
+  
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Only query user's own data
+  const userData = await db.select()
+    .from(someTable)
+    .where(eq(someTable.userId, userId));
+    
+  return NextResponse.json(userData);
+}
+```
+
+### Server Component Security Pattern
+```typescript
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+
+export default async function UserDataPage() {
+  const { userId } = await auth();
+  
+  if (!userId) {
+    redirect('/sign-in');
+  }
+
+  // Always filter by userId
+  const userDecks = await db.select()
+    .from(decksTable)
+    .where(eq(decksTable.userId, userId));
+
+  return (
+    <div>
+      {/* Render user's data */}
+    </div>
+  );
+}
+```
+
+## Database Schema Requirements
+
+### User ID Column
+All user-specific tables MUST include a `userId` column:
+
+```typescript
+export const decksTable = pgTable('decks', {
+  id: serial('id').primaryKey(),
+  userId: text('user_id').notNull(), // REQUIRED for user data isolation
+  // ... other columns
+});
+
+export const cardsTable = pgTable('cards', {
+  id: serial('id').primaryKey(),
+  userId: text('user_id').notNull(), // REQUIRED for user data isolation
+  deckId: integer('deck_id').references(() => decksTable.id),
+  // ... other columns
+});
+```
+
+## Security Enforcement Rules
+
+### 1. Query Validation
+**BEFORE executing any database query, verify:**
+- [ ] Does this query involve user-specific data?
+- [ ] Is the `userId` filter applied?
+- [ ] Can this query potentially return another user's data?
+
+### 2. Parameter Validation
+When accepting IDs from client (deck ID, card ID, etc.):
+
+```typescript
+// ✅ CORRECT - Verify ownership before using resource ID
+async function getUserDeck(deckId: number, userId: string) {
+  const deck = await db.query.decksTable.findFirst({
+    where: and(
+      eq(decksTable.id, deckId),
+      eq(decksTable.userId, userId) // CRITICAL: verify ownership
+    ),
+  });
+  
+  if (!deck) {
+    throw new Error('Deck not found or access denied');
+  }
+  
+  return deck;
+}
+
+// ❌ FORBIDDEN - Using resource ID without ownership verification
+const deck = await db.query.decksTable.findFirst({
+  where: eq(decksTable.id, deckId), // Missing userId check!
+});
+```
+
+### 3. Insert Operations
+Always set userId when creating new records:
+
+```typescript
+// ✅ CORRECT - Always include userId when creating records
+const newDeck = await db.insert(decksTable)
+  .values({
+    title: deckTitle,
+    userId: userId, // REQUIRED
+    // ... other fields
+  })
+  .returning();
+
+// ❌ FORBIDDEN - Creating records without userId
+const badDeck = await db.insert(decksTable)
+  .values({
+    title: deckTitle,
+    // Missing userId!
+  });
+```
+
+### 4. Update/Delete Operations
+Always verify ownership before modifying data:
+
+```typescript
+// ✅ CORRECT - Verify ownership in WHERE clause
+await db.update(decksTable)
+  .set({ title: newTitle, updatedAt: new Date() })
+  .where(and(
+    eq(decksTable.id, deckId),
+    eq(decksTable.userId, userId) // CRITICAL: verify ownership
+  ));
+
+// ✅ CORRECT - Delete with ownership verification
+await db.delete(cardsTable)
+  .where(and(
+    eq(cardsTable.id, cardId),
+    eq(cardsTable.userId, userId) // CRITICAL: verify ownership
+  ));
+```
+
+## Protected Route Patterns
+
+### Page-Level Protection
+```typescript
+// app/dashboard/page.tsx
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+
+export default async function DashboardPage() {
+  const { userId } = await auth();
+  
+  if (!userId) {
+    redirect('/sign-in');
+  }
+  
+  // Safe to load user data
+  return <DashboardContent userId={userId} />;
+}
+```
+
+### Middleware Integration
+Leverage [middleware.ts](mdc:src/middleware.ts) for route protection:
+
+```typescript
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+
+const isProtectedRoute = createRouteMatcher([
+  '/dashboard(.*)',
+  '/flashcards(.*)',
+  '/study(.*)',
+]);
+
+export default clerkMiddleware(async (auth, req) => {
+  if (isProtectedRoute(req)) {
+    await auth.protect();
+  }
+});
+```
+
+## Common Security Anti-Patterns
+
+### ❌ NEVER DO THESE:
+
+1. **Skip user authentication checks:**
+```typescript
+// BAD: No auth check
+const data = await db.select().from(decksTable);
+```
+
+2. **Query without user filtering:**
+```typescript
+// BAD: Missing userId filter
+const deck = await db.query.decksTable.findFirst({
+  where: eq(decksTable.id, deckId),
+});
+```
+
+3. **Trust client-provided user IDs:**
+```typescript
+// BAD: Using userId from request body/params
+const clientUserId = req.body.userId; // Never trust this!
+```
+
+4. **Expose internal IDs without verification:**
+```typescript
+// BAD: Direct database ID exposure
+return NextResponse.json({ internalId: record.id });
+```
+
+## Testing Security
+
+### Security Test Checklist
+For each new feature, verify:
+- [ ] Unauthenticated users are properly redirected
+- [ ] Users cannot access other users' data via API manipulation
+- [ ] All database queries include proper user filtering
+- [ ] Resource ownership is verified before modifications
+- [ ] No sensitive data leaks in error messages
+
+### Example Security Test
+```typescript
+// Verify user data isolation
+describe('Data Access Security', () => {
+  it('should only return current user data', async () => {
+    const user1Data = await getUserDecks(user1Id);
+    const user2Data = await getUserDecks(user2Id);
+    
+    expect(user1Data).not.toContainEqual(
+      expect.objectContaining({ userId: user2Id })
+    );
+  });
+});
+```
+
+## Critical Security Principle
+
+> **Every database operation involving user data MUST be protected by user ID filtering. No exceptions.**
+
+When in doubt, always err on the side of more restrictive access control rather than less.

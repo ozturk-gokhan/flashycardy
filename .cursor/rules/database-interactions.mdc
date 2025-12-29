@@ -1,0 +1,150 @@
+---
+alwaysApply: true
+---
+
+# Database Interactions with Drizzle ORM
+
+All database interactions in this project **MUST** use the Drizzle ORM schema and queries. Never use raw SQL queries or other database interaction patterns.
+
+## Database Configuration
+
+- **Database Instance**: Always import from **[db.ts](mdc:src/lib/db.ts)**
+- **Schema**: All tables and relations are defined in **[schema.ts](mdc:src/db/schema.ts)**
+- **Configuration**: Drizzle configuration is in **[drizzle.config.ts](mdc:drizzle.config.ts)**
+
+## Required Imports
+
+For all database operations, use these imports:
+
+```typescript
+import { db } from "@/lib/db";
+import { 
+  decksTable, 
+  cardsTable, 
+  studySessionsTable,
+  type Deck, 
+  type NewDeck,
+  type Card,
+  type NewCard,
+  type StudySession,
+  type NewStudySession
+} from "@/db/schema";
+```
+
+## Query Patterns
+
+### Select Operations
+```typescript
+// Select all
+const decks = await db.select().from(decksTable);
+
+// Select with WHERE clause
+const userDecks = await db.select()
+  .from(decksTable)
+  .where(eq(decksTable.userId, userId));
+
+// Select with relations
+const deckWithCards = await db.query.decksTable.findFirst({
+  where: eq(decksTable.id, deckId),
+  with: {
+    cards: true,
+  },
+});
+```
+
+### Insert Operations
+```typescript
+// Single insert
+const [newDeck] = await db.insert(decksTable)
+  .values({
+    title: "My Deck",
+    userId: "user123",
+  })
+  .returning();
+
+// Multiple insert
+await db.insert(cardsTable)
+  .values([
+    { front: "Question 1", back: "Answer 1", deckId },
+    { front: "Question 2", back: "Answer 2", deckId },
+  ]);
+```
+
+### Update Operations
+```typescript
+// Update with WHERE clause
+await db.update(cardsTable)
+  .set({ 
+    difficulty: newDifficulty,
+    nextReview: nextReviewDate,
+    updatedAt: new Date(),
+  })
+  .where(eq(cardsTable.id, cardId));
+```
+
+### Delete Operations
+```typescript
+// Delete with WHERE clause
+await db.delete(cardsTable)
+  .where(eq(cardsTable.id, cardId));
+
+// Cascading deletes are handled by schema relations
+await db.delete(decksTable)
+  .where(eq(decksTable.id, deckId)); // Cards will be deleted automatically
+```
+
+## Available Tables and Types
+
+### Tables
+- `decksTable` - Flashcard decks/collections
+- `cardsTable` - Individual flashcards
+- `studySessionsTable` - Study session tracking
+
+### TypeScript Types
+- `Deck` / `NewDeck` - For deck operations
+- `Card` / `NewCard` - For card operations  
+- `StudySession` / `NewStudySession` - For study session operations
+
+## Drizzle Query Helpers
+
+Always use Drizzle's query helpers instead of raw conditions:
+- `eq(column, value)` - Equality
+- `ne(column, value)` - Not equal
+- `gt(column, value)` - Greater than
+- `gte(column, value)` - Greater than or equal
+- `lt(column, value)` - Less than
+- `lte(column, value)` - Less than or equal
+- `like(column, pattern)` - SQL LIKE
+- `and(condition1, condition2)` - AND conditions
+- `or(condition1, condition2)` - OR conditions
+
+## Best Practices
+
+1. **Always use TypeScript types** from the schema for type safety
+2. **Use relations** defined in the schema for joins instead of manual joins
+3. **Use `.returning()`** on insert/update operations when you need the result
+4. **Handle errors** appropriately with try-catch blocks
+5. **Use transactions** for operations that modify multiple tables
+6. **Never use raw SQL** - always use Drizzle query builder
+7. **Import query helpers** (`eq`, `and`, `or`, etc.) from `drizzle-orm`
+
+## Forbidden Patterns
+
+❌ **Never do this:**
+```typescript
+// Raw SQL queries
+await db.execute(sql`SELECT * FROM decks WHERE user_id = ${userId}`);
+
+// Direct database client usage
+await sql`SELECT * FROM decks`;
+
+// Non-Drizzle ORMs or query builders
+
+// Inconsistent database interaction patterns
+```
+
+✅ **Always do this:**
+```typescript
+// Use Drizzle query builder
+await db.select().from(decksTable).where(eq(decksTable.userId, userId));
+```

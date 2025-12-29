@@ -1,0 +1,61 @@
+---
+globs: *.tsx,*.ts,*.css
+description: Tailwind CSS styling guidelines and conventions
+---
+
+# Tailwind CSS Styling Guidelines
+
+This project uses Tailwind CSS v4 for styling with a custom CSS variable-based theming system.
+
+## CSS Configuration
+
+The project uses **[globals.css](mdc:src/app/globals.css)** which includes:
+- Tailwind CSS import via `@import "tailwindcss"`
+- CSS variables for theming (`--background`, `--foreground`)
+- Dark mode support via `prefers-color-scheme`
+- Custom font variables from Geist fonts
+
+## Styling Conventions
+
+### 1. Use Tailwind Classes First
+- Prefer Tailwind utility classes over custom CSS
+- Use responsive prefixes: `sm:`, `md:`, `lg:`, `xl:`
+- Use state modifiers: `hover:`, `focus:`, `active:`, `disabled:`
+
+### 2. CSS Variables for Theming
+Current CSS variables available:
+- `--background` / `--color-background`
+- `--foreground` / `--color-foreground` 
+- `--font-geist-sans` / `--font-sans`
+- `--font-geist-mono` / `--font-mono`
+
+### 3. Dark Mode Implementation
+- Use CSS variables that automatically switch based on `prefers-color-scheme`
+- Apply `dark:` prefix classes when needed for specific dark mode styles
+- Example: `bg-background text-foreground` uses the CSS variables
+
+### 4. Component Styling Patterns
+
+**Flashcard Components:**
+```tsx
+// Card container
+className="bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg p-6"
+
+// Interactive elements
+className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+
+// Text hierarchy
+className="text-3xl font-semibold text-foreground"
+className="text-lg text-gray-600 dark:text-gray-400"
+```
+
+### 5. Layout Patterns
+- Use flexbox and grid utilities: `flex`, `grid`, `items-center`, `justify-between`
+- Responsive spacing: `p-4 md:p-6 lg:p-8`
+- Container patterns: `max-w-3xl mx-auto px-4`
+
+### 6. Best Practices
+- Group related classes logically (layout, spacing, colors, typography)
+- Use consistent spacing scale (4, 8, 12, 16, 24, 32...)
+- Leverage Tailwind's design tokens for consistency
+- Use `clsx` or `cn` utility for conditional classes when needed with shadcn/ui

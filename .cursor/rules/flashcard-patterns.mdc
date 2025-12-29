@@ -1,0 +1,72 @@
+---
+description: Flashcard application development patterns and best practices
+---
+
+# Flashcard Application Development Patterns
+
+Guidelines for building the FlashyCardy flashcard application with consistent patterns and best practices.
+
+## Core Flashcard Features
+
+### 1. Flashcard Data Structure
+```typescript
+interface Flashcard {
+  id: string;
+  front: string;
+  back: string;
+  tags?: string[];
+  difficulty?: 'easy' | 'medium' | 'hard';
+  lastReviewed?: Date;
+  nextReview?: Date;
+  reviewCount?: number;
+  correctCount?: number;
+}
+
+interface Deck {
+  id: string;
+  name: string;
+  description?: string;
+  flashcards: Flashcard[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+### 2. Study Session Patterns
+- Implement spaced repetition algorithm (SM-2 or similar)
+- Track study statistics and progress
+- Support different study modes (review, learn new, mixed)
+- Provide immediate feedback on answers
+
+### 3. Component Architecture
+
+**Flashcard Components:**
+- `FlashcardViewer` - Display single flashcard with flip animation
+- `FlashcardEditor` - Create/edit flashcard content
+- `DeckGrid` - Display collection of decks
+- `StudySession` - Manage study flow and progress
+- `ProgressTracker` - Show learning statistics
+
+**UI Patterns:**
+- Use shadcn/ui `Card` component for flashcard containers
+- Implement flip animations with CSS transforms
+- Use `Progress` component for study session progress
+- Apply `Badge` components for tags and difficulty levels
+
+### 4. State Management
+- Use React hooks for local component state
+- Consider Context API for global app state (current deck, study session)
+- Implement localStorage for data persistence
+- Plan for future database integration
+
+### 5. Accessibility Guidelines
+- Ensure keyboard navigation for study sessions (Space to flip, Arrow keys to navigate)
+- Provide proper ARIA labels for screen readers
+- Support high contrast mode and font size preferences
+- Include focus indicators for interactive elements
+
+### 6. Performance Considerations
+- Lazy load flashcard content for large decks
+- Implement virtual scrolling for deck lists
+- Use React.memo for flashcard components to prevent unnecessary re-renders
+- Optimize images and media in flashcards

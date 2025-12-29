@@ -1,0 +1,56 @@
+---
+alwaysApply: true
+description: shadcn/ui component library setup and usage guidelines
+---
+
+# shadcn/ui Component Library
+
+This project uses shadcn/ui for all UI elements. shadcn/ui provides beautifully designed, accessible components built with Radix UI and Tailwind CSS.
+
+## Installation & Setup
+
+If shadcn/ui is not initialized in the project, use:
+```bash
+npx shadcn@latest init
+```
+
+## Adding Components
+
+To install specific components, use the add command. For example:
+```bash
+npx shadcn@latest add button
+npx shadcn@latest add card
+npx shadcn@latest add input
+npx shadcn@latest add dialog
+npx shadcn@latest add form
+```
+
+## Component Usage Guidelines
+
+- **Always use shadcn/ui components** instead of creating custom UI components from scratch
+- Components are installed in `src/components/ui/` directory
+- Import components from their specific paths: `import { Button } from "@/components/ui/button"`
+- Follow shadcn/ui naming conventions and component APIs
+- Customize components using Tailwind CSS classes and component variants
+
+## Common Components for Flashcard App
+
+Essential components likely needed:
+- `button` - For interactive elements
+- `card` - For flashcard containers
+- `input` - For form inputs
+- `form` - For form handling
+- `dialog` - For modals and popups
+- `badge` - For tags and labels
+- `progress` - For learning progress
+- `tabs` - For navigation between sections
+- `select` - For dropdown selections
+- `textarea` - For multi-line text input
+
+## Best Practices
+
+1. Check if a component exists in shadcn/ui before creating custom components
+2. Use component variants for different styles (e.g., `variant="outline"`)
+3. Combine multiple shadcn/ui components to create complex UI patterns
+4. Leverage the built-in accessibility features of shadcn/ui components
+5. Use the shadcn/ui theming system for consistent design

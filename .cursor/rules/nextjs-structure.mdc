@@ -1,0 +1,60 @@
+---
+alwaysApply: true
+description: Next.js 15 App Router project structure and conventions
+---
+
+# FlashyCardy - Next.js Project Structure
+
+This is a Next.js 15 application using the App Router with TypeScript and Tailwind CSS.
+
+## Project Structure
+
+```
+flashycardy/
+├── src/
+│   └── app/                    # App Router directory
+│       ├── layout.tsx          # Root layout component
+│       ├── page.tsx            # Home page component
+│       ├── globals.css         # Global styles with Tailwind
+│       └── favicon.ico         # App favicon
+├── public/                     # Static assets
+├── package.json               # Dependencies and scripts
+├── next.config.ts             # Next.js configuration
+├── tsconfig.json              # TypeScript configuration
+├── postcss.config.mjs         # PostCSS configuration for Tailwind
+└── eslint.config.mjs          # ESLint configuration
+```
+
+## Key Files
+
+- **[layout.tsx](mdc:src/app/layout.tsx)** - Root layout with font configuration and metadata
+- **[page.tsx](mdc:src/app/page.tsx)** - Main home page component
+- **[globals.css](mdc:src/app/globals.css)** - Global styles with CSS variables and Tailwind import
+- **[package.json](mdc:package.json)** - Project dependencies including Next.js 16.1.1, React 19, and Tailwind CSS v4
+
+## Development Guidelines
+
+1. **App Router**: Use the `src/app/` directory for all routes and layouts
+2. **TypeScript**: All components should be TypeScript with proper type definitions
+3. **Styling**: Use Tailwind CSS classes for styling, CSS variables for theming
+4. **Components**: Create reusable components in `src/components/` (to be created)
+5. **Fonts**: Project uses Geist Sans and Geist Mono fonts from Google Fonts
+6. **Dark Mode**: Support for system preference dark mode via CSS variables
+
+## Recommended Directory Structure for Flashcard App
+
+```
+src/
+├── app/
+│   ├── (dashboard)/           # Route groups for dashboard
+│   ├── flashcards/           # Flashcard-related pages
+│   ├── study/                # Study session pages
+│   └── settings/             # Settings pages
+├── components/
+│   ├── ui/                   # shadcn/ui components
+│   ├── flashcard/           # Flashcard-specific components
+│   └── common/              # Shared components
+├── lib/                     # Utility functions and configurations
+├── hooks/                   # Custom React hooks
+└── types/                   # TypeScript type definitions
+```
