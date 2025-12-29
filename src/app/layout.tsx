@@ -7,6 +7,7 @@ import {
 } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 import { NavigationMenu } from "@/components/navigation-menu";
+import { Logo } from "@/components/logo";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -18,6 +19,14 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "FlashyCardy",
   description: "Master any subject with intelligent flashcards and spaced repetition",
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
 };
 
 export default function RootLayout({
@@ -39,9 +48,7 @@ export default function RootLayout({
         >
           <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container flex h-14 items-center justify-between px-4">
-              <div className="flex items-center space-x-2">
-                <h1 className="text-lg font-semibold">Flashy Cardy</h1>
-              </div>
+              <Logo size="lg" href="/dashboard" />
               <div className="flex items-center space-x-4">
                 <SignedIn>
                   <NavigationMenu />
