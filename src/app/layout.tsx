@@ -6,6 +6,7 @@ import {
   UserButton,
 } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
+import { NavigationMenu } from "@/components/navigation-menu";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -43,17 +44,7 @@ export default function RootLayout({
               </div>
               <div className="flex items-center space-x-4">
                 <SignedIn>
-                  <nav className="flex items-center space-x-4 mr-4">
-                    <a href="/dashboard" className="text-sm hover:text-blue-400 transition-colors">
-                      Dashboard
-                    </a>
-                    <a href="/flashcards" className="text-sm hover:text-blue-400 transition-colors">
-                      Flashcards
-                    </a>
-                    <a href="/study" className="text-sm hover:text-blue-400 transition-colors">
-                      Study
-                    </a>
-                  </nav>
+                  <NavigationMenu />
                   <UserButton afterSignOutUrl="/" />
                 </SignedIn>
               </div>
