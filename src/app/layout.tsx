@@ -33,6 +33,8 @@ export default function RootLayout({
       appearance={{
         baseTheme: dark,
       }}
+      afterSignInUrl="/dashboard"
+      afterSignUpUrl="/dashboard"
     >
       <html lang="en" className="dark">
         <body
