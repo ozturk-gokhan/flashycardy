@@ -1,8 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
-import { decksTable, cardsTable, type Deck } from "@/db/schema";
-import { eq, count } from "drizzle-orm";
+import { getUserDecksWithCards } from "@/db/queries/deck-queries";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,14 +14,8 @@ export default async function Flashcards() {
     redirect('/');
   }
 
-  // Fetch user's decks with card count
-  const userDecks = await db.query.decksTable.findMany({
-    where: eq(decksTable.userId, userId),
-    with: {
-      cards: true,
-    },
-    orderBy: (decks, { desc }) => [desc(decks.createdAt)],
-  });
+  // Fetch user's decks with cards using query helper
+  const userDecks = await getUserDecksWithCards(userId);
 
   return (
     <div className="min-h-[calc(100vh-3.5rem)] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -75,7 +67,7 @@ export default async function Flashcards() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {userDecks.map((deck) => (
-                  <Card key={deck.id} className="bg-slate-800 border-slate-700 hover:border-slate-600 hover:bg-slate-700 transition-all cursor-pointer group">
+                  <Card key={deck.id} className="bg-slate-800 border-slate-700 hover:border-slate-600 hover:bg-slate-700 transition-all group">
                     <CardHeader>
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
@@ -93,17 +85,18 @@ export default async function Flashcards() {
                         </Badge>
                       </div>
                     </CardHeader>
-                    <CardContent>
-                      <div className="flex justify-between items-center">
-                        <div className="text-sm text-slate-400">
-                          Created: {new Date(deck.createdAt).toLocaleDateString()}
-                        </div>
-                        <div className="flex gap-2">
-                          <EditDeckButton deck={deck} />
-                          <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                            Study
-                          </Button>
-                        </div>
+                    <CardContent className="pt-0">
+                      <div className="flex gap-2 w-full">
+                        <EditDeckButton
+                          deck={deck}
+                          className="flex-1"
+                        />
+                        <Button
+                          size="sm"
+                          className="flex-1 bg-blue-600 hover:bg-blue-700"
+                        >
+                          Study
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>

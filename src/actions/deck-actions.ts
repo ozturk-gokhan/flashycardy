@@ -2,9 +2,7 @@
 
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import { db } from '@/lib/db';
-import { decksTable, type NewDeck } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { createDeck, updateDeck, deleteDeck } from '@/db/queries/deck-queries';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 
@@ -24,7 +22,7 @@ const CreateDeckSchema = z.object({
 // TypeScript type from Zod schema
 type CreateDeckInput = z.infer<typeof CreateDeckSchema>;
 
-export async function createDeck(input: CreateDeckInput) {
+export async function createDeckAction(input: CreateDeckInput) {
   // Authentication check
   const { userId } = await auth();
   if (!userId) {
@@ -35,15 +33,11 @@ export async function createDeck(input: CreateDeckInput) {
     // Validate input data
     const validatedInput = CreateDeckSchema.parse(input);
 
-    // Database mutation
-    const [newDeck] = await db.insert(decksTable)
-      .values({
-        ...validatedInput,
-        userId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning();
+    // Database mutation using query helper
+    const newDeck = await createDeck({
+      ...validatedInput,
+      userId,
+    });
 
     // Revalidate cache
     revalidatePath('/flashcards');
@@ -80,7 +74,7 @@ const UpdateDeckSchema = z.object({
 
 type UpdateDeckInput = z.infer<typeof UpdateDeckSchema>;
 
-export async function updateDeck(input: UpdateDeckInput) {
+export async function updateDeckAction(input: UpdateDeckInput) {
   const { userId } = await auth();
   if (!userId) {
     redirect('/');
@@ -88,24 +82,10 @@ export async function updateDeck(input: UpdateDeckInput) {
 
   try {
     const validatedInput = UpdateDeckSchema.parse(input);
+    const { id, ...updates } = validatedInput;
 
-    // Verify ownership and update
-    const [updatedDeck] = await db.update(decksTable)
-      .set({
-        title: validatedInput.title,
-        description: validatedInput.description,
-        isPublic: validatedInput.isPublic,
-        updatedAt: new Date(),
-      })
-      .where(and(
-        eq(decksTable.id, validatedInput.id),
-        eq(decksTable.userId, userId)
-      ))
-      .returning();
-
-    if (!updatedDeck) {
-      return { success: false, error: 'Deck not found or access denied' };
-    }
+    // Update using query helper with built-in ownership verification
+    const updatedDeck = await updateDeck(id, userId, updates);
 
     revalidatePath('/flashcards');
     return { success: true, deck: updatedDeck };
@@ -120,12 +100,16 @@ export async function updateDeck(input: UpdateDeckInput) {
       };
     }
     
+    if (error instanceof Error && error.message.includes('not found')) {
+      return { success: false, error: 'Deck not found or access denied' };
+    }
+    
     return { success: false, error: 'Failed to update deck' };
   }
 }
 
 // Delete deck server action
-export async function deleteDeck(deckId: string) {
+export async function deleteDeckAction(deckId: string) {
   const { userId } = await auth();
   if (!userId) {
     redirect('/');
@@ -134,16 +118,8 @@ export async function deleteDeck(deckId: string) {
   try {
     const validatedId = z.string().uuid().parse(deckId);
 
-    const deletedDeck = await db.delete(decksTable)
-      .where(and(
-        eq(decksTable.id, validatedId),
-        eq(decksTable.userId, userId)
-      ))
-      .returning();
-
-    if (deletedDeck.length === 0) {
-      return { success: false, error: 'Deck not found or access denied' };
-    }
+    // Delete using query helper with built-in ownership verification
+    await deleteDeck(validatedId, userId);
 
     revalidatePath('/flashcards');
     return { success: true };
@@ -156,6 +132,10 @@ export async function deleteDeck(deckId: string) {
         error: 'Invalid deck ID',
         details: error.issues 
       };
+    }
+    
+    if (error instanceof Error && error.message.includes('not found')) {
+      return { success: false, error: 'Deck not found or access denied' };
     }
     
     return { success: false, error: 'Failed to delete deck' };

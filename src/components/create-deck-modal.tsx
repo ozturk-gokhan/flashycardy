@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { createDeck } from '@/actions/deck-actions';
+import { createDeckAction } from '@/actions/deck-actions';
 import {
   Dialog,
   DialogContent,
@@ -41,7 +41,7 @@ export function CreateDeckModal({ children }: CreateDeckModalProps) {
 
     try {
       // Call server action
-      const result = await createDeck(deckData);
+      const result = await createDeckAction(deckData);
       
       if (result.success) {
         // Reset form and close modal

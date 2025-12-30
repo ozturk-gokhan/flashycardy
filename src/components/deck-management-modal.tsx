@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getDeckCards, createCard, createCards, updateCard, deleteCard } from '@/actions/card-actions';
-import { updateDeck, deleteDeck } from '@/actions/deck-actions';
+import { getDeckCardsAction, createCardAction, createCardsAction, updateCardAction, deleteCardAction } from '@/actions/card-actions';
+import { updateDeckAction, deleteDeckAction } from '@/actions/deck-actions';
 import {
   Dialog,
   DialogContent,
@@ -85,7 +85,7 @@ export function DeckManagementModal({ deck: initialDeck, children }: DeckManagem
     setError(null);
     
     try {
-      const result = await getDeckCards(deck.id);
+      const result = await getDeckCardsAction(deck.id);
       if (result.success) {
         setCards(result.cards || []);
         if (result.deck) {
@@ -112,7 +112,7 @@ export function DeckManagementModal({ deck: initialDeck, children }: DeckManagem
     setError(null);
 
     try {
-      const result = await createCard({
+      const result = await createCardAction({
         front: newCard.front,
         back: newCard.back,
         deckId: deck.id,
@@ -158,7 +158,7 @@ export function DeckManagementModal({ deck: initialDeck, children }: DeckManagem
     setError(null);
 
     try {
-      const result = await createCards({
+      const result = await createCardsAction({
         deckId: deck.id,
         cards: parsedCards,
       });
@@ -184,7 +184,7 @@ export function DeckManagementModal({ deck: initialDeck, children }: DeckManagem
     setError(null);
 
     try {
-      const result = await updateCard({
+      const result = await updateCardAction({
         id: cardId,
         front: editingCard.front,
         back: editingCard.back,
@@ -213,7 +213,7 @@ export function DeckManagementModal({ deck: initialDeck, children }: DeckManagem
     setError(null);
 
     try {
-      const result = await deleteCard(cardId);
+      const result = await deleteCardAction(cardId);
 
       if (result.success) {
         setCards(prev => prev.filter(card => card.id !== cardId));
@@ -233,7 +233,7 @@ export function DeckManagementModal({ deck: initialDeck, children }: DeckManagem
     setError(null);
 
     try {
-      const result = await updateDeck({
+      const result = await updateDeckAction({
         id: deck.id,
         title: deckForm.title,
         description: deckForm.description,
@@ -263,7 +263,7 @@ export function DeckManagementModal({ deck: initialDeck, children }: DeckManagem
     setError(null);
 
     try {
-      const result = await deleteDeck(deck.id);
+      const result = await deleteDeckAction(deck.id);
 
       if (result.success) {
         setOpen(false);
